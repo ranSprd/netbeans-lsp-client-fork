@@ -22,30 +22,21 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DocumentSymbol;
-import org.eclipse.lsp4j.DocumentSymbolCapabilities;
 import org.eclipse.lsp4j.DocumentSymbolParams;
-import org.eclipse.lsp4j.Location;
-import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolInformation;
-import org.eclipse.lsp4j.SymbolKind;
-import org.eclipse.lsp4j.SymbolKindCapabilities;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
-import org.eclipse.lsp4j.TextDocumentItem;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.netbeans.modules.lsp.client.LSPBindings;
@@ -55,12 +46,10 @@ import org.netbeans.spi.navigator.NavigatorPanel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.BeanTreeView;
 import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.filesystems.URLMapper;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.LookupEvent;
 import org.openide.util.LookupListener;
@@ -145,20 +134,15 @@ public class NavigatorPanelImpl extends Children.Keys<Either<SymbolInformation, 
                 String uri = Utils.toURI(file);
                 TextDocumentService docService = bindings.getTextDocumentService();
                 
-                boolean symbolSupport = bindings.getInitResult().getCapabilities().hasDocumentSymbolSupport();
-                
-                TextDocumentIdentifier t = new TextDocumentIdentifier(uri);
-                DocumentSymbolParams dsp = new DocumentSymbolParams(t);
                 
                 CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> s = 
-//                        docService.documentSymbol(new DocumentSymbolParams(new TextDocumentIdentifier(uri)));
-                        docService.documentSymbol(dsp);
+                        docService.documentSymbol(new DocumentSymbolParams(new TextDocumentIdentifier(uri)));
                 List<Either<SymbolInformation, DocumentSymbol>> symbols = s.get();
 
                 setKeys(symbols);
                 view.expandAll();
             } catch (ExecutionException ex) {
-                LOG.log(Level.WARNING, "Can't load data from TextDocumentService", ex);
+//                LOG.log(Level.WARNING, "Can't load data from TextDocumentService", ex);
                 setKeys(Collections.emptyList());
             } catch (InterruptedException ex) {
                 //try again:

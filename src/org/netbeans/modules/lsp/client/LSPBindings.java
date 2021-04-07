@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -76,6 +77,7 @@ import org.netbeans.modules.lsp.client.bindings.LanguageClientImpl;
 import org.netbeans.modules.lsp.client.bindings.TextDocumentSyncServerCapabilityHandler;
 import org.netbeans.modules.lsp.client.model.LSPInitializeResult;
 import org.netbeans.modules.lsp.client.options.MimeTypeInfo;
+import org.netbeans.modules.lsp.client.spi.LSPClientInfo;
 import org.netbeans.modules.lsp.client.spi.ServerRestarter;
 import org.netbeans.modules.lsp.client.spi.LanguageServerProvider;
 import org.netbeans.modules.lsp.client.spi.LanguageServerProvider.LanguageServerDescription;
@@ -112,26 +114,26 @@ public class LSPBindings {
 
         // Remove LSP Servers from strong reference tracking, that have not
         // been accessed more than LSP_KEEP_ALIVE_MINUTES minutes
-//        WORKER.scheduleAtFixedRate(
-//            () -> {
-//                synchronized (LSPBindings.class) {
-////                    long tooOld = System.currentTimeMillis() - (LSP_KEEP_ALIVE_MINUTES * 60L * 1000L);
-//                    long tooOld = System.currentTimeMillis() - (10L * 60L * 1000L);
-//                    Iterator<Entry<LSPBindings, Long>> iterator = lspKeepAlive.entrySet().iterator();
-//                    while (iterator.hasNext()) {
-//                        Entry<LSPBindings, Long> entry = iterator.next();
-//                        if (entry.getValue() < tooOld) {
-//                            iterator.remove();
-//                        }
-//                    }
-//                }
-//            },
-//            Math.max(LSP_KEEP_ALIVE_MINUTES / 2, 1),
-//            Math.max(LSP_KEEP_ALIVE_MINUTES / 2, 1),
-//            TimeUnit.MINUTES);
+        WORKER.scheduleAtFixedRate(
+            () -> {
+                synchronized (LSPBindings.class) {
+                    long tooOld = System.currentTimeMillis() - (LSP_KEEP_ALIVE_MINUTES * 60L * 1000L);
+                    Iterator<Entry<LSPBindings, Long>> iterator = lspKeepAlive.entrySet().iterator();
+                    while (iterator.hasNext()) {
+                        Entry<LSPBindings, Long> entry = iterator.next();
+                        if (entry.getValue() < tooOld) {
+                            iterator.remove();
+                        }
+                    }
+                }
+            },
+            Math.max(LSP_KEEP_ALIVE_MINUTES / 2, 1),
+            Math.max(LSP_KEEP_ALIVE_MINUTES / 2, 1),
+            TimeUnit.MINUTES);
     }
 
     private static final Map<FileObject, Map<BackgroundTask, RequestProcessor.Task>> backgroundTasks = new WeakHashMap<>();
+    private static final LSPClientInfo CLIENT_INFO = new LSPClientInfo();
     private final Set<FileObject> openedFiles = new HashSet<>();
 
     public static synchronized LSPBindings getBindings(FileObject file) {
@@ -203,7 +205,7 @@ public class LSPBindings {
     }
 
     @SuppressWarnings({"AccessingNonPublicFieldOfAnotherObject", "ResultOfObjectAllocationIgnored"})
-    private static LSPBindings buildBindings(Project prj, String mt, FileObject dir, URI baseUri) {
+    private static LSPBindings buildBindings(Project project, String mt, FileObject dir, URI baseUri) {
         MimeTypeInfo mimeTypeInfo = new MimeTypeInfo(mt);
         ServerRestarter restarter = () -> {
             synchronized (LSPBindings.class) {
@@ -212,9 +214,8 @@ public class LSPBindings {
 
                 if (b != null) {
                     lspKeepAlive.remove(b);
-
                     try {
-                        LOG.log(Level.WARNING, "shutting down LSP server");
+//                        LOG.log(Level.WARNING, "shutting down LSP server");
                         b.server.shutdown().get();
                     } catch (InterruptedException | ExecutionException ex) {
                         LOG.log(Level.FINE, null, ex);
@@ -225,9 +226,9 @@ public class LSPBindings {
                 }
             }
         };
-
+        
         for (LanguageServerProvider provider : MimeLookup.getLookup(mt).lookupAll(LanguageServerProvider.class)) {
-            final Lookup lkp = prj != null ? Lookups.fixed(prj, mimeTypeInfo, restarter) : Lookups.fixed(mimeTypeInfo, restarter);
+            final Lookup lkp = project != null ? Lookups.fixed(project, mimeTypeInfo, restarter) : Lookups.fixed(mimeTypeInfo, restarter);
             LanguageServerDescription desc = provider.startServer(lkp);
 
             if (desc != null) {
@@ -303,12 +304,20 @@ public class LSPBindings {
        }
        initParams.setWorkspaceFolders(Arrays.asList(root).stream()
                .map(fileObject -> Utils.toURI(root))
-               .map(uri -> new WorkspaceFolder( uri, "csharp-project"))
+               .map(uri -> new WorkspaceFolder( uri))
                .collect(Collectors.toList()) ); //?
+
+        // The process Id of the parent process that started the server. Is null if
+	// the process has not been started by another process. If the parent
+	// process is not alive then the server should exit (see exit notification)
+	// its process.       
+        // Either we set our ID or NULL
+        // initParams.setProcessId( null);
+       Integer pid = (int) ProcessHandle.current().pid();
+       initParams.setProcessId( pid);
        
-       initParams.setProcessId( (int) p.pid()); //?
-       initParams.setClientInfo( new ClientInfo("netbeans-LSP", "1")); //?
-       initParams.setTrace( TraceValue.Verbose);
+       initParams.setClientInfo( CLIENT_INFO.generateClientInfo()); 
+//       initParams.setTrace( TraceValue.Verbose);
        
        SymbolCapabilities symbolCapabilities = new SymbolCapabilities(new SymbolKindCapabilities(Arrays.asList(SymbolKind.values())));
        

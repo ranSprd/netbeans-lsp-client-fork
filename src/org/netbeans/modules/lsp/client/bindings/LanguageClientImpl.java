@@ -59,10 +59,10 @@ import org.eclipse.lsp4j.UnregistrationParams;
 import org.eclipse.lsp4j.WorkDoneProgressCreateParams;
 import org.eclipse.lsp4j.WorkspaceFolder;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.netbeans.modules.lsp.client.LSPBindings;
 import org.netbeans.modules.lsp.client.Utils;
+import org.netbeans.modules.lsp.client.log.LogStorage;
 import org.netbeans.spi.editor.hints.ChangeInfo;
 import org.netbeans.spi.editor.hints.ErrorDescription;
 import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
@@ -167,7 +167,15 @@ public class LanguageClientImpl implements LanguageClient {
      */
     @Override
     public void logMessage(MessageParams arg0) {
-        System.err.println("logMessage: " + arg0);
+        switch(arg0.getType()) {
+            case Error: LogStorage.ALL.error(arg0.getMessage());
+                        break;
+            case Warning: LogStorage.ALL.warning(arg0.getMessage());
+                        break;
+            default: LogStorage.ALL.info(arg0.getMessage());
+                        break;
+        }
+//        System.err.println("logMessage: " + arg0);
     }
     
     
@@ -223,7 +231,6 @@ public class LanguageClientImpl implements LanguageClient {
     public CompletableFuture<Void> registerCapability(RegistrationParams params) {
         CompletableFuture<Void> result = new CompletableFuture<>();
         // @todo
-        System.out.println("register Capability " +params);
         return result;
     }
 
@@ -264,7 +271,6 @@ public class LanguageClientImpl implements LanguageClient {
     public CompletableFuture<Void> createProgress(WorkDoneProgressCreateParams params) {
         CompletableFuture<Void> result = new CompletableFuture<>();
         // @todo
-        System.out.println("create Progress " +params);
         return result;
     }
 
@@ -279,7 +285,6 @@ public class LanguageClientImpl implements LanguageClient {
     @Override
     public void notifyProgress(ProgressParams params) {
         // @todo
-        System.out.println("notify Progress " +params);
     }
 
     /**
@@ -305,7 +310,6 @@ public class LanguageClientImpl implements LanguageClient {
     @Override
     public void setTrace(SetTraceParams params) {
         // @todo
-        System.out.println("setLogTrace: " +params);
     }
 
     /**
@@ -322,7 +326,6 @@ public class LanguageClientImpl implements LanguageClient {
     public CompletableFuture<Void> refreshSemanticTokens() {
         CompletableFuture<Void> result = new CompletableFuture<>();
         // @todo
-        System.out.println("refreshSemanticTokes ");
         return result;
     }
 
@@ -339,7 +342,6 @@ public class LanguageClientImpl implements LanguageClient {
     public CompletableFuture<Void> refreshCodeLenses() {
         CompletableFuture<Void> result = new CompletableFuture<>();
         // @todo
-        System.out.println("refreshCodeLenses ");
         return result;
     }
     
