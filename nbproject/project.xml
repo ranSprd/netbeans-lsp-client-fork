@@ -424,24 +424,24 @@
                 <binary-origin>release/modules/ext/org.eclipse.xtext.xbase.lib-2.25.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/org.eclipse.lsp4j.jsonrpc-0.11.0-SNAPSHOT.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/org.eclipse.lsp4j.jsonrpc-0.11.0-SNAPSHOT.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/org.eclipse.lsp4j.generator-0.11.0-SNAPSHOT.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/org.eclipse.lsp4j.generator-0.11.0-SNAPSHOT.jar</binary-origin>
+                <runtime-relative-path>ext/org.eclipse.lsp4j.generator-0.13.0-SNAPSHOT.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/org.eclipse.lsp4j.generator-0.13.0-SNAPSHOT.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/gson-2.8.6.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/gson-2.8.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/org.eclipse.lsp4j.jsonrpc-0.13.0-SNAPSHOT.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/org.eclipse.lsp4j.jsonrpc-0.13.0-SNAPSHOT.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/org.eclipse.xtend.lib.macro-2.25.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/org.eclipse.xtend.lib.macro-2.25.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/org.eclipse.lsp4j-0.11.0-SNAPSHOT.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/org.eclipse.lsp4j-0.11.0-SNAPSHOT.jar</binary-origin>
+                <runtime-relative-path>ext/org.eclipse.lsp4j-0.13.0-SNAPSHOT.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/org.eclipse.lsp4j-0.13.0-SNAPSHOT.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

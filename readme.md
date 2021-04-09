@@ -13,15 +13,17 @@ apache Netbeans community.
 - upgrade eclipse [LSP4j libraries](https://github.com/eclipse/lsp4j) which supports the latest LSP spec (LSP 3.16.0) 
 - implement missing code because of LSP upgrade
 - make it work with Omnisharp
+    - set PID
+    - send initialized msg
 - LSP Server logging UI
 
 ## build instructions
 
 you need the following libraries in folder `release/modules/ext`
 
-- org.eclipse.lsp4j.generator-0.11.0-SNAPSHOT.jar
-- org.eclipse.lsp4j-0.11.0-SNAPSHOT.jar
-- org.eclipse.lsp4j.jsonrpc-0.11.0-SNAPSHOT.jar
+- org.eclipse.lsp4j.generator-0.13.0-SNAPSHOT.jar
+- org.eclipse.lsp4j-0.13.0-SNAPSHOT.jar
+- org.eclipse.lsp4j.jsonrpc-0.13.0-SNAPSHOT.jar
 - gson-2.8.6.jar
 - org.eclipse.xtend.lib-2.25.0.jar
 - org.eclipse.xtext.xbase.lib-2.25.0.jar

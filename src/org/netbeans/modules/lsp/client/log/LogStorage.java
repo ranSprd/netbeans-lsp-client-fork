@@ -17,6 +17,7 @@ public enum LogStorage {
     
     private int maxCapacity = 5000;
     private boolean enabled = false;
+    private boolean consoleLogging = false;
     private final List<LogLine> lines = new ArrayList<>();
     private final LogTableModel tableModel = new LogTableModel();
     
@@ -37,10 +38,33 @@ public enum LogStorage {
         enabled = !enabled;
     }
 
-    public boolean isEnabled() {
+    public void setLoggingEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    /**
+     * collect and print logging messages
+     * @return false if logging is disabled and no log message will be logged
+     */
+    public boolean isLoggingEnabled() {
         return enabled;
     }
+
+    /**
+     * log messages additionally on system.out - only if logging is enabled 
+     * @return true/false
+     */
+    public boolean isConsoleLogging() {
+        return consoleLogging;
+    }
+
+    public void setConsoleLogging(boolean consoleLogging) {
+        this.consoleLogging = consoleLogging;
+    }
     
+    
+    
+    /** register/print a log message (or throw away if logging is disabled) */
     public LogStorage add(LogLine line) {
         
         if (!enabled) {
@@ -63,6 +87,11 @@ public enum LogStorage {
         } else {
             tableModel.fireTableRowsInserted(lastLineIndex, lastLineIndex);
         }
+        
+        if (consoleLogging) {
+            System.out.println(line);
+        }
+        
         return this;
     }
     

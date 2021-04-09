@@ -166,13 +166,13 @@ public class LanguageClientImpl implements LanguageClient {
      * the client to log a particular message.
      */
     @Override
-    public void logMessage(MessageParams arg0) {
-        switch(arg0.getType()) {
-            case Error: LogStorage.ALL.error(arg0.getMessage());
+    public void logMessage(MessageParams message) {
+        switch(message.getType()) {
+            case Error: LogStorage.ALL.error(message.getMessage());
                         break;
-            case Warning: LogStorage.ALL.warning(arg0.getMessage());
+            case Warning: LogStorage.ALL.warning(message.getMessage());
                         break;
-            default: LogStorage.ALL.info(arg0.getMessage());
+            default: LogStorage.ALL.info(message.getMessage());
                         break;
         }
 //        System.err.println("logMessage: " + arg0);
@@ -231,6 +231,7 @@ public class LanguageClientImpl implements LanguageClient {
     public CompletableFuture<Void> registerCapability(RegistrationParams params) {
         CompletableFuture<Void> result = new CompletableFuture<>();
         // @todo
+        System.err.println("register Capabilities " +params);
         return result;
     }
 
@@ -346,8 +347,6 @@ public class LanguageClientImpl implements LanguageClient {
     }
     
     
-    
-
     private final class DiagnosticFixList implements LazyFixList {
 
         private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
@@ -387,11 +386,11 @@ public class LanguageClientImpl implements LanguageClient {
                                 bindings.getTextDocumentService().codeAction(new CodeActionParams(new TextDocumentIdentifier(fileUri),
                                         diagnostic.getRange(),
                                         new CodeActionContext(Collections.singletonList(diagnostic)))).get();
-                        List<Fix> fixes = commands.stream()
+                        List<Fix> newFixes = commands.stream()
                                                   .map(cmd -> new CommandBasedFix(cmd))
                                                   .collect(Collectors.toList());
                         synchronized (this) {
-                            this.fixes = Collections.unmodifiableList(fixes);
+                            this.fixes = Collections.unmodifiableList(newFixes);
                             this.computed = true;
                             this.computing = false;
                         }

@@ -49,6 +49,7 @@ import javax.swing.event.ChangeListener;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.ClientInfo;
 import org.eclipse.lsp4j.CompletionCapabilities;
+import org.eclipse.lsp4j.DocumentHighlightCapabilities;
 import org.eclipse.lsp4j.DocumentSymbolCapabilities;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
@@ -122,6 +123,7 @@ public class LSPBindings {
                     while (iterator.hasNext()) {
                         Entry<LSPBindings, Long> entry = iterator.next();
                         if (entry.getValue() < tooOld) {
+                            //@todo close the server...
                             iterator.remove();
                         }
                     }
@@ -317,19 +319,24 @@ public class LSPBindings {
        initParams.setProcessId( pid);
        
        initParams.setClientInfo( CLIENT_INFO.generateClientInfo()); 
-//       initParams.setTrace( TraceValue.Verbose);
+//       initParams.setTrace( TraceValue.Message);
        
-       SymbolCapabilities symbolCapabilities = new SymbolCapabilities(new SymbolKindCapabilities(Arrays.asList(SymbolKind.values())));
+       SymbolCapabilities symbolCapabilities = new SymbolCapabilities(
+               new SymbolKindCapabilities(Arrays.asList(SymbolKind.values())));
+       symbolCapabilities.setDynamicRegistration(Boolean.TRUE);
        
        TextDocumentClientCapabilities tdcc = new TextDocumentClientCapabilities();
        DocumentSymbolCapabilities dsc = new DocumentSymbolCapabilities();
-       dsc.setDynamicRegistration(Boolean.FALSE); //?
+       dsc.setDynamicRegistration(Boolean.TRUE); //?
        dsc.setSymbolKind( symbolCapabilities.getSymbolKind());
        dsc.setHierarchicalDocumentSymbolSupport(true);
        dsc.setTagSupport( symbolCapabilities.getTagSupport()); //?
        dsc.setLabelSupport(Boolean.FALSE); //?
        
        tdcc.setDocumentSymbol(dsc);
+       DocumentHighlightCapabilities dh = new DocumentHighlightCapabilities(); //?
+       dh.setDynamicRegistration(Boolean.TRUE); //?
+       tdcc.setDocumentHighlight( dh); //?
        
        CompletionCapabilities completionCapabilities = new CompletionCapabilities();
        completionCapabilities.setContextSupport(Boolean.TRUE);

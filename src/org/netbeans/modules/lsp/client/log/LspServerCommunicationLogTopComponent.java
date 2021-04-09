@@ -50,6 +50,7 @@ public final class LspServerCommunicationLogTopComponent extends TopComponent {
         clearButton = new javax.swing.JButton();
         jSeparator1 = new javax.swing.JToolBar.Separator();
         logStateButton = new javax.swing.JToggleButton();
+        consoleLogginButton = new javax.swing.JToggleButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
 
@@ -69,7 +70,7 @@ public final class LspServerCommunicationLogTopComponent extends TopComponent {
         jToolBar1.add(clearButton);
         jToolBar1.add(jSeparator1);
 
-        logStateButton.setSelected(LogStorage.ALL.isEnabled());
+        logStateButton.setSelected(LogStorage.ALL.isLoggingEnabled());
         org.openide.awt.Mnemonics.setLocalizedText(logStateButton, org.openide.util.NbBundle.getMessage(LspServerCommunicationLogTopComponent.class, "LspServerCommunicationLogTopComponent.logStateButton.text")); // NOI18N
         logStateButton.setFocusable(false);
         logStateButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -80,6 +81,20 @@ public final class LspServerCommunicationLogTopComponent extends TopComponent {
             }
         });
         jToolBar1.add(logStateButton);
+
+        consoleLogginButton.setSelected(LogStorage.ALL.isConsoleLogging());
+        org.openide.awt.Mnemonics.setLocalizedText(consoleLogginButton, org.openide.util.NbBundle.getMessage(LspServerCommunicationLogTopComponent.class, "LspServerCommunicationLogTopComponent.consoleLogginButton.text")); // NOI18N
+        consoleLogginButton.setToolTipText(org.openide.util.NbBundle.getMessage(LspServerCommunicationLogTopComponent.class, "LspServerCommunicationLogTopComponent.consoleLogginButton.toolTipText")); // NOI18N
+        consoleLogginButton.setEnabled(LogStorage.ALL.isLoggingEnabled());
+        consoleLogginButton.setFocusable(false);
+        consoleLogginButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        consoleLogginButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        consoleLogginButton.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                consoleLogginButtonItemStateChanged(evt);
+            }
+        });
+        jToolBar1.add(consoleLogginButton);
 
         jTable1.setAutoCreateRowSorter(true);
         jTable1.setModel(LogStorage.ALL.getTableModel());
@@ -93,14 +108,14 @@ public final class LspServerCommunicationLogTopComponent extends TopComponent {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 477, Short.MAX_VALUE)
+            .addComponent(jScrollPane2)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 366, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -109,11 +124,17 @@ public final class LspServerCommunicationLogTopComponent extends TopComponent {
     }//GEN-LAST:event_clearButtonActionPerformed
 
     private void logStateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logStateButtonActionPerformed
-        LogStorage.ALL.toggleLogging();
+        consoleLogginButton.setEnabled(logStateButton.isSelected());
+        LogStorage.ALL.setLoggingEnabled( logStateButton.isSelected());
     }//GEN-LAST:event_logStateButtonActionPerformed
+
+    private void consoleLogginButtonItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_consoleLogginButtonItemStateChanged
+        LogStorage.ALL.setConsoleLogging( consoleLogginButton.isSelected());
+    }//GEN-LAST:event_consoleLogginButtonItemStateChanged
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton clearButton;
+    private javax.swing.JToggleButton consoleLogginButton;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JToolBar.Separator jSeparator1;
     private javax.swing.JTable jTable1;
