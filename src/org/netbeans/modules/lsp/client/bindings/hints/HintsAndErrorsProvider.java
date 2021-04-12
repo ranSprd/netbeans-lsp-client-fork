@@ -4,10 +4,14 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.swing.text.Document;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionContext;
@@ -29,6 +33,7 @@ import static org.netbeans.spi.editor.hints.LazyFixList.PROP_COMPUTED;
 import static org.netbeans.spi.editor.hints.LazyFixList.PROP_FIXES;
 import org.netbeans.spi.editor.hints.Severity;
 import org.openide.filesystems.FileObject;
+import org.openide.util.RequestProcessor;
 
 /**
  *
@@ -44,17 +49,16 @@ public class HintsAndErrorsProvider {
         severityMap.put(DiagnosticSeverity.Information, Severity.HINT);
         severityMap.put(DiagnosticSeverity.Warning, Severity.WARNING);
     }
-
-    
     
     private final LSPBindings bindings;
+    private final Map<String, ListMerger> cachedLists = new HashMap<>();
 
     public HintsAndErrorsProvider(LSPBindings bindings) {
         this.bindings = bindings;
     }
     
     public List<ErrorDescription> consume(PublishDiagnosticsParams diagnostics, FileObject file, Document doc) {
-        System.out.println("pdp version " +diagnostics.getVersion() +" \t" +diagnostics.getUri());
+//        System.out.println("pdp version " +diagnostics.getVersion() +"\t "+diagnostics.getDiagnostics().size() +" \t" +diagnostics.getUri());
         List<ErrorDescription> errorDescriptions = diagnostics.getDiagnostics().stream()
                 .map(d -> createHintsAndErrors(doc, file, diagnostics.getUri(), d))
                 .collect(Collectors.toList());
@@ -62,12 +66,49 @@ public class HintsAndErrorsProvider {
     }
 
     private ErrorDescription createHintsAndErrors(Document doc, FileObject file, String uri, org.eclipse.lsp4j.Diagnostic d) {
-//                    LazyFixList fixList = allowCodeActions ? new DiagnosticFixList(pdp.getUri(), d) : ErrorDescriptionFactory.lazyListForFixes(Collections.emptyList());
-//                    return ErrorDescriptionFactory.createErrorDescription(severityMap.get(d.getSeverity()), d.getMessage(), fixList, file, Utils.getOffset(doc, d.getRange().getStart()), Utils.getOffset(doc, d.getRange().getEnd()));
         LazyFixList fixList = new DiagnosticFixList(uri, d);
         return ErrorDescriptionFactory.createErrorDescription(severityMap.get(d.getSeverity()), d.getMessage(), fixList, file, Utils.getOffset(doc, d.getRange().getStart()), Utils.getOffset(doc, d.getRange().getEnd()));
     }
     
+    
+    private ListMerger get(PublishDiagnosticsParams diagnostics) {
+        int v = (diagnostics.getVersion() == null)?-1:diagnostics.getVersion();
+
+        ListMerger listMerger = cachedLists.get(diagnostics.getUri());
+        if (listMerger == null) {
+            listMerger = new ListMerger(v);
+            cachedLists.put(diagnostics.getUri(), listMerger);
+        } else if (listMerger.version < v) {
+            // incoming data for a newer version, throw the old stuff away
+            listMerger = new ListMerger(v);
+            cachedLists.put(diagnostics.getUri(), listMerger);
+        } else if (listMerger.version > v) {
+            // uuupppps, that is crazy
+        }
+        
+        return listMerger;
+    }
+    
+    /** merge list of the same version */
+    private class ListMerger {
+
+        private final int version;
+        private final Set<org.eclipse.lsp4j.Diagnostic> allDiagnosticItems = new HashSet<>();
+
+        public ListMerger(int version) {
+            this.version = version;
+        }
+
+        public int getVersion() {
+            return version;
+        }
+        
+        public Stream<Diagnostic> combinedStream(List<Diagnostic> list) {
+            allDiagnosticItems.addAll(list);
+            return allDiagnosticItems.stream();
+        }
+
+    }
     
     private final class DiagnosticFixList implements LazyFixList {
 

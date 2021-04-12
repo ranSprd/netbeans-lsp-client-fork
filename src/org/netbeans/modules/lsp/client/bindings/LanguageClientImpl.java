@@ -18,32 +18,19 @@
  */
 package org.netbeans.modules.lsp.client.bindings;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import javax.swing.text.Document;
 import org.eclipse.lsp4j.ApplyWorkspaceEditParams;
 import org.eclipse.lsp4j.ApplyWorkspaceEditResponse;
-import org.eclipse.lsp4j.CodeAction;
-import org.eclipse.lsp4j.CodeActionContext;
-import org.eclipse.lsp4j.CodeActionParams;
-import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.ConfigurationItem;
 import org.eclipse.lsp4j.ConfigurationParams;
-import org.eclipse.lsp4j.Diagnostic;
-import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.LogTraceParams;
 import org.eclipse.lsp4j.MessageActionItem;
 import org.eclipse.lsp4j.MessageParams;
@@ -54,27 +41,21 @@ import org.eclipse.lsp4j.SetTraceParams;
 import org.eclipse.lsp4j.ShowDocumentParams;
 import org.eclipse.lsp4j.ShowDocumentResult;
 import org.eclipse.lsp4j.ShowMessageRequestParams;
-import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.UnregistrationParams;
 import org.eclipse.lsp4j.WorkDoneProgressCreateParams;
 import org.eclipse.lsp4j.WorkspaceFolder;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.netbeans.modules.lsp.client.LSPBindings;
 import org.netbeans.modules.lsp.client.Utils;
 import org.netbeans.modules.lsp.client.bindings.hints.HintsAndErrorsProvider;
 import org.netbeans.modules.lsp.client.log.LogStorage;
-import org.netbeans.spi.editor.hints.ChangeInfo;
+import org.netbeans.modules.parsing.api.indexing.IndexingManager;
+import org.netbeans.modules.parsing.impl.indexing.errors.TaskProvider;
 import org.netbeans.spi.editor.hints.ErrorDescription;
-import org.netbeans.spi.editor.hints.ErrorDescriptionFactory;
-import org.netbeans.spi.editor.hints.Fix;
 import org.netbeans.spi.editor.hints.HintsController;
-import org.netbeans.spi.editor.hints.LazyFixList;
-import org.netbeans.spi.editor.hints.Severity;
 import org.openide.cookies.EditorCookie;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.URLMapper;
-import org.openide.util.Exceptions;
 import org.openide.util.RequestProcessor;
 
 /**
@@ -114,8 +95,10 @@ public class LanguageClientImpl implements LanguageClient {
                     return ; //ignore...
                 }
 
-                List<ErrorDescription> errorDescriptions = hintsAndErrorsProvider.consume(pdp, file, doc);
-                HintsController.setErrors(doc, LanguageClientImpl.class.getName(), errorDescriptions);
+                WORKER.post(() -> {                
+                    List<ErrorDescription> errorDescriptions = hintsAndErrorsProvider.consume(pdp, file, doc);
+                    HintsController.setErrors(doc, LanguageClientImpl.class.getName(), errorDescriptions);
+                });
                 
             } catch (URISyntaxException | MalformedURLException ex) {
                 LOG.log(Level.FINE, null, ex);
@@ -187,6 +170,7 @@ public class LanguageClientImpl implements LanguageClient {
         WORKER.post(() -> {
             List<Object> outcome = new ArrayList<>();
             for (ConfigurationItem ci : configurationParams.getItems()) {
+                System.out.println("server ask for config " +ci);
                 outcome.add(null);
             }
             result.complete(outcome);
@@ -208,7 +192,6 @@ public class LanguageClientImpl implements LanguageClient {
         CompletableFuture<List<WorkspaceFolder>> result = new CompletableFuture<>();
         WORKER.post(() -> {
             List<WorkspaceFolder> outcome = new ArrayList<>();
-            
             // @todo add folder logic
             result.complete(outcome);
         });
