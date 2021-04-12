@@ -59,6 +59,7 @@ public class BaseSymbolProvider {
     private CompletableFuture<List<? extends SymbolInformation>> currentQuery;
 
     public String name() {
+        // @todo use a more specific name here? moduleName of implementation?
         return "lsp-client";
     }
 
