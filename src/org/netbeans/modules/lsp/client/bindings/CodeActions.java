@@ -80,7 +80,7 @@ public class CodeActions implements CodeGenerator.Factory {
                 }
             }).collect(Collectors.toList());
         } catch (BadLocationException | InterruptedException | ExecutionException ex) {
-            Exceptions.printStackTrace(ex);
+//            Exceptions.printStackTrace(ex);
             return Collections.emptyList();
         }
     }
