@@ -124,6 +124,10 @@ public class LSPBindings {
                         Entry<LSPBindings, Long> entry = iterator.next();
                         if (entry.getValue() < tooOld) {
                             //@todo close the server...
+                            try {
+                                entry.getKey().process.destroy();
+                            } catch (Exception e) {
+                            }
                             iterator.remove();
                         }
                     }

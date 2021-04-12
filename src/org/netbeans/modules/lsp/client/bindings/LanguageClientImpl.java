@@ -62,6 +62,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.netbeans.modules.lsp.client.LSPBindings;
 import org.netbeans.modules.lsp.client.Utils;
+import org.netbeans.modules.lsp.client.bindings.hints.HintsAndErrorsProvider;
 import org.netbeans.modules.lsp.client.log.LogStorage;
 import org.netbeans.spi.editor.hints.ChangeInfo;
 import org.netbeans.spi.editor.hints.ErrorDescription;
@@ -85,21 +86,12 @@ public class LanguageClientImpl implements LanguageClient {
     private static final Logger LOG = Logger.getLogger(LanguageClientImpl.class.getName());
     private static final RequestProcessor WORKER = new RequestProcessor(LanguageClientImpl.class.getName(), 1, false, false);
     
-    private static final Map<DiagnosticSeverity, Severity> severityMap = new EnumMap<>(DiagnosticSeverity.class);
-    
-    static {
-        severityMap.put(DiagnosticSeverity.Error, Severity.ERROR);
-        severityMap.put(DiagnosticSeverity.Hint, Severity.HINT);
-        severityMap.put(DiagnosticSeverity.Information, Severity.HINT);
-        severityMap.put(DiagnosticSeverity.Warning, Severity.WARNING);
-    }
-
-    private LSPBindings bindings;
     private boolean allowCodeActions;
-
+    private HintsAndErrorsProvider hintsAndErrorsProvider;
+    
     public void setBindings(LSPBindings bindings) {
-        this.bindings = bindings;
         this.allowCodeActions = bindings.getInitResult().getCapabilities().hasCodeActionSupport();
+        this.hintsAndErrorsProvider = new HintsAndErrorsProvider(bindings);
     }
 
     /**
@@ -113,22 +105,24 @@ public class LanguageClientImpl implements LanguageClient {
 
     @Override
     public void publishDiagnostics(PublishDiagnosticsParams pdp) {
-        try {
-            FileObject file = URLMapper.findFileObject(new URI(pdp.getUri()).toURL());
-            EditorCookie ec = file.getLookup().lookup(EditorCookie.class);
-            Document doc = ec != null ? ec.getDocument() : null;
-            if (doc == null)
-                return ; //ignore...
-            List<ErrorDescription> diags = pdp.getDiagnostics().stream().map(d -> {
-                LazyFixList fixList = allowCodeActions ? new DiagnosticFixList(pdp.getUri(), d) : ErrorDescriptionFactory.lazyListForFixes(Collections.emptyList());
-                return ErrorDescriptionFactory.createErrorDescription(severityMap.get(d.getSeverity()), d.getMessage(), fixList, file, Utils.getOffset(doc, d.getRange().getStart()), Utils.getOffset(doc, d.getRange().getEnd()));
-            }).collect(Collectors.toList());
-            HintsController.setErrors(doc, LanguageClientImpl.class.getName(), diags);
-        } catch (URISyntaxException | MalformedURLException ex) {
-            LOG.log(Level.FINE, null, ex);
+        if (allowCodeActions && hintsAndErrorsProvider != null) {
+            try {
+                FileObject file = URLMapper.findFileObject(new URI(pdp.getUri()).toURL());
+                EditorCookie ec = file.getLookup().lookup(EditorCookie.class);
+                Document doc = ec != null ? ec.getDocument() : null;
+                if (doc == null) {
+                    return ; //ignore...
+                }
+
+                List<ErrorDescription> errorDescriptions = hintsAndErrorsProvider.consume(pdp, file, doc);
+                HintsController.setErrors(doc, LanguageClientImpl.class.getName(), errorDescriptions);
+                
+            } catch (URISyntaxException | MalformedURLException ex) {
+                LOG.log(Level.FINE, null, ex);
+            }
         }
     }
-
+    
 
     /**
      * The workspace/applyEdit request is sent from the server to the client to modify 
@@ -347,87 +341,4 @@ public class LanguageClientImpl implements LanguageClient {
     }
     
     
-    private final class DiagnosticFixList implements LazyFixList {
-
-        private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
-        private final String fileUri;
-        private final Diagnostic diagnostic;
-        private List<Fix> fixes;
-        private boolean computing;
-        private boolean computed;
-
-        public DiagnosticFixList(String fileUri, Diagnostic diagnostic) {
-            this.fileUri = fileUri;
-            this.diagnostic = diagnostic;
-        }
-
-        @Override
-        public void addPropertyChangeListener(PropertyChangeListener l) {
-            pcs.addPropertyChangeListener(l);
-        }
-
-        @Override
-        public void removePropertyChangeListener(PropertyChangeListener l) {
-            pcs.removePropertyChangeListener(l);
-        }
-
-        @Override
-        public boolean probablyContainsFixes() {
-            return true;
-        }
-
-        @Override
-        public synchronized List<Fix> getFixes() {
-            if (!computing && !computed) {
-                computing = true;
-                bindings.runOnBackground(() -> {
-                    try {
-                        List<Either<Command, CodeAction>> commands =
-                                bindings.getTextDocumentService().codeAction(new CodeActionParams(new TextDocumentIdentifier(fileUri),
-                                        diagnostic.getRange(),
-                                        new CodeActionContext(Collections.singletonList(diagnostic)))).get();
-                        List<Fix> newFixes = commands.stream()
-                                                  .map(cmd -> new CommandBasedFix(cmd))
-                                                  .collect(Collectors.toList());
-                        synchronized (this) {
-                            this.fixes = Collections.unmodifiableList(newFixes);
-                            this.computed = true;
-                            this.computing = false;
-                        }
-                        pcs.firePropertyChange(PROP_COMPUTED, null, null);
-                        pcs.firePropertyChange(PROP_FIXES, null, null);
-                    } catch (InterruptedException | ExecutionException ex) {
-                        Exceptions.printStackTrace(ex);
-                    }
-                });
-            }
-            return fixes;
-        }
-
-        @Override
-        public synchronized boolean isComputed() {
-            return computed;
-        }
-
-        private class CommandBasedFix implements Fix {
-
-            private final Either<Command, CodeAction> cmd;
-
-            public CommandBasedFix(Either<Command, CodeAction> cmd) {
-                this.cmd = cmd;
-            }
-
-            @Override
-            public String getText() {
-                return cmd.isLeft() ? cmd.getLeft().getTitle() : cmd.getRight().getTitle();
-            }
-
-            @Override
-            public ChangeInfo implement() throws Exception {
-                Utils.applyCodeAction(bindings, cmd);
-                return null;
-            }
-        }
-        
-    }
 }
