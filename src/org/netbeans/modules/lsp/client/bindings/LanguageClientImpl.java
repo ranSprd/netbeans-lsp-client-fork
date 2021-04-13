@@ -49,8 +49,6 @@ import org.netbeans.modules.lsp.client.LSPBindings;
 import org.netbeans.modules.lsp.client.Utils;
 import org.netbeans.modules.lsp.client.bindings.hints.HintsAndErrorsProvider;
 import org.netbeans.modules.lsp.client.log.LogStorage;
-import org.netbeans.modules.parsing.api.indexing.IndexingManager;
-import org.netbeans.modules.parsing.impl.indexing.errors.TaskProvider;
 import org.netbeans.spi.editor.hints.ErrorDescription;
 import org.netbeans.spi.editor.hints.HintsController;
 import org.openide.cookies.EditorCookie;

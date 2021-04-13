@@ -34,6 +34,9 @@ import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import org.eclipse.lsp4j.DocumentHighlight;
 import org.eclipse.lsp4j.DocumentHighlightParams;
+import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.ReferenceContext;
+import org.eclipse.lsp4j.ReferenceParams;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.netbeans.api.editor.mimelookup.MimeLookup;
 import org.netbeans.api.editor.mimelookup.MimeRegistration;
@@ -65,25 +68,28 @@ public class MarkOccurrences implements BackgroundTask, CaretListener, PropertyC
 
     public MarkOccurrences(JTextComponent component) {
         this.component = component;
-        component.addCaretListener(this);
-        component.addPropertyChangeListener(this);
-        doc = component.getDocument();
-        caretPos = component.getCaretPosition();
+        try {
+            component.addCaretListener(this);
+            component.addPropertyChangeListener(this);
+            doc = component.getDocument();
+            caretPos = component.getCaretPosition();
+        } catch (Exception e) {
+        }
     }
 
     @Override
     public void run(LSPBindings bindings, FileObject file) {
-        Document doc;
-        int caretPos;
+        Document document;
+        int latestCaretPos;
         synchronized (this) {
-            doc = this.doc;
-            caretPos = this.caretPos;
+            document = this.doc;
+            latestCaretPos = this.caretPos;
         }
-        getHighlightsBag(doc).setHighlights(computeHighlights(doc, caretPos));
+        getHighlightsBag(document).setHighlights(computeHighlights(document, latestCaretPos));
     }
 
     private OffsetsBag computeHighlights(Document doc, int caretPos) {
-         AttributeSet attr = getColoring(doc);
+        AttributeSet attr = getColoring(doc);
         OffsetsBag result = new OffsetsBag(doc);
         FileObject file = NbEditorUtilities.getFileObject(doc);
         if (file == null) {
@@ -93,21 +99,57 @@ public class MarkOccurrences implements BackgroundTask, CaretListener, PropertyC
         if (server == null) {
             return result;
         }
-        boolean hasDocumentHighlight = server.getInitResult().getCapabilities().hasDocumentHighlightSupport();
-        if (!hasDocumentHighlight) {
-            return result;
-        }
         String uri = Utils.toURI(file);
-        try {
-            List<? extends DocumentHighlight> highlights =
-                    server.getTextDocumentService().documentHighlight(new DocumentHighlightParams(new TextDocumentIdentifier(uri), Utils.createPosition(doc, caretPos))).get();
-            for (DocumentHighlight h : highlights) {
-                result.addHighlight(Utils.getOffset(doc, h.getRange().getStart()), Utils.getOffset(doc, h.getRange().getEnd()), attr);
+        
+        boolean hasDocumentHighlight = server.getInitResult().getCapabilities().hasDocumentHighlightSupport();
+        if (hasDocumentHighlight) {
+            addHighlightings(server, result, attr, uri);
+        } else {
+            // fallback - if highlighting is not supported...
+            boolean hasReferences = server.getInitResult().getCapabilities().hasReferenceSupport();
+            if (hasReferences) {
+                highlightingBasedOnReferences(server, result, attr, uri);
             }
-            return result;
+        }
+        return result;
+    }
+    
+    private void addHighlightings(LSPBindings server, OffsetsBag result, AttributeSet attr, String fileUri) {
+        try {
+            DocumentHighlightParams params = new DocumentHighlightParams(new TextDocumentIdentifier(fileUri), 
+                                                                  Utils.createPosition(doc, caretPos));
+            List<? extends DocumentHighlight> highlights = server.getTextDocumentService()
+                                                                    .documentHighlight( params)
+                                                                    .get();
+            if (highlights != null) {
+                for (DocumentHighlight h : highlights) {
+                    result.addHighlight(Utils.getOffset(doc, h.getRange().getStart()), 
+                                          Utils.getOffset(doc, h.getRange().getEnd()), 
+                                         attr);
+                }
+            }
         } catch (BadLocationException | InterruptedException | ExecutionException ex) {
             Exceptions.printStackTrace(ex);
-            return result;
+        }
+    }
+    
+    private void highlightingBasedOnReferences(LSPBindings server, OffsetsBag result, AttributeSet attr, String fileUri) {
+        try {
+            ReferenceParams params = new ReferenceParams( new TextDocumentIdentifier(fileUri), 
+                                                          Utils.createPosition(doc, caretPos),
+                                                          new ReferenceContext(true));
+            List<? extends Location> references = server.getTextDocumentService()
+                                                            .references( params)
+                                                            .get();
+            for(Location location : references) {
+                if (fileUri.equals(location.getUri())) {
+                    result.addHighlight(Utils.getOffset(doc, location.getRange().getStart()), 
+                                          Utils.getOffset(doc, location.getRange().getEnd()), 
+                                         attr);
+                }
+            }
+        } catch (Exception ex) {
+            Exceptions.printStackTrace(ex);
         }
     }
 

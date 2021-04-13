@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.netbeans.modules.lsp.client.bindings.hints;
 
 import java.beans.PropertyChangeListener;
@@ -33,7 +51,6 @@ import static org.netbeans.spi.editor.hints.LazyFixList.PROP_COMPUTED;
 import static org.netbeans.spi.editor.hints.LazyFixList.PROP_FIXES;
 import org.netbeans.spi.editor.hints.Severity;
 import org.openide.filesystems.FileObject;
-import org.openide.util.RequestProcessor;
 
 /**
  *
@@ -59,7 +76,8 @@ public class HintsAndErrorsProvider {
     
     public List<ErrorDescription> consume(PublishDiagnosticsParams diagnostics, FileObject file, Document doc) {
 //        System.out.println("pdp version " +diagnostics.getVersion() +"\t "+diagnostics.getDiagnostics().size() +" \t" +diagnostics.getUri());
-        List<ErrorDescription> errorDescriptions = diagnostics.getDiagnostics().stream()
+        List<ErrorDescription> errorDescriptions = get(diagnostics).combinedStream(diagnostics.getDiagnostics())
+//        List<ErrorDescription> errorDescriptions = diagnostics.getDiagnostics().stream()
                 .map(d -> createHintsAndErrors(doc, file, diagnostics.getUri(), d))
                 .collect(Collectors.toList());
         return errorDescriptions;
@@ -72,17 +90,18 @@ public class HintsAndErrorsProvider {
     
     
     private ListMerger get(PublishDiagnosticsParams diagnostics) {
-        int v = (diagnostics.getVersion() == null)?-1:diagnostics.getVersion();
+        int diagnosticVersion = (diagnostics.getVersion() == null)?-1:diagnostics.getVersion();
 
         ListMerger listMerger = cachedLists.get(diagnostics.getUri());
-        if (listMerger == null) {
-            listMerger = new ListMerger(v);
+        if (listMerger == null || diagnosticVersion == 0) {
+            // sometimes version 0 contains broken infos
+            listMerger = new ListMerger(diagnosticVersion);
             cachedLists.put(diagnostics.getUri(), listMerger);
-        } else if (listMerger.version < v) {
+        } else if (listMerger.version < diagnosticVersion) {
             // incoming data for a newer version, throw the old stuff away
-            listMerger = new ListMerger(v);
+            listMerger = new ListMerger(diagnosticVersion);
             cachedLists.put(diagnostics.getUri(), listMerger);
-        } else if (listMerger.version > v) {
+        } else if (listMerger.version > diagnosticVersion) {
             // uuupppps, that is crazy
         }
         
