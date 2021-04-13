@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.netbeans.modules.lsp.client.bindings;
+package org.netbeans.modules.lsp.client.bindings.symbols;
 
 import javax.swing.Icon;
 import org.eclipse.lsp4j.SymbolInformation;
@@ -36,15 +36,17 @@ public class SymbolProviderImpl extends BaseSymbolProvider implements SymbolProv
     @Override
     @Messages("DN_getDisplayName=Language Server Symbol Provider")
     public String getDisplayName() {
-        return Bundle.DN_Symbols();
+        return Bundle.DN_getDisplayName();
     }
 
     @Override
     public void computeSymbolNames(Context context, Result result) {
-        computeSymbolNames(context.getSearchType(), context.getText(), (info, simpleName) -> result.addResult(new SymbolDescriptorImpl(info, simpleName)));
+        computeSymbolNames(context.getSearchType(), 
+            context.getText(), 
+                    (info, simpleName) -> result.addResult(new SymbolDescriptorImpl(info, simpleName)));
     }
 
-    public static class SymbolDescriptorImpl extends SymbolDescriptor implements BaseSymbolDescriptor {
+    private static class SymbolDescriptorImpl extends SymbolDescriptor implements BaseSymbolDescriptor {
 
         private final SymbolInformation info;
         private final String simpleName;

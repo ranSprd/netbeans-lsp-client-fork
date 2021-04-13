@@ -39,6 +39,7 @@ import org.netbeans.editor.Utilities;
 import org.netbeans.lib.editor.hyperlink.spi.HyperlinkProviderExt;
 import org.netbeans.lib.editor.hyperlink.spi.HyperlinkType;
 import org.netbeans.modules.editor.NbEditorUtilities;
+import org.netbeans.modules.lsp.client.LSPBindingFactory;
 import org.netbeans.modules.lsp.client.LSPBindings;
 import org.netbeans.modules.lsp.client.Utils;
 import org.netbeans.modules.textmate.lexer.TextmateTokenId;
@@ -76,6 +77,7 @@ public class HyperlinkProviderImpl implements HyperlinkProviderExt {
                 return null;
             }
             TokenSequence<?> ts = TokenHierarchy.get(doc).tokenSequence();
+            
             if (ts == null) {
                 return ident;
             }
@@ -84,7 +86,7 @@ public class HyperlinkProviderImpl implements HyperlinkProviderExt {
                 return new int[]{ts.offset(), ts.offset() + ts.token().length()};
             }
             return ident;
-        } catch (BadLocationException ex) {
+        } catch (Exception ex) {
             return null;
         }
     }
@@ -96,7 +98,7 @@ public class HyperlinkProviderImpl implements HyperlinkProviderExt {
             //TODO: beep
             return ;
         }
-        LSPBindings server = LSPBindings.getBindings(file);
+        LSPBindings server = LSPBindingFactory.getBindingForFile(file);
         if (server == null) {
             return ;
         }

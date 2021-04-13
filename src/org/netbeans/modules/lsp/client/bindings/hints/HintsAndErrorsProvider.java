@@ -41,6 +41,7 @@ import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.netbeans.modules.lsp.client.LSPBindings;
+import org.netbeans.modules.lsp.client.LSPWorkingPool;
 import org.netbeans.modules.lsp.client.Utils;
 import org.netbeans.spi.editor.hints.ChangeInfo;
 import org.netbeans.spi.editor.hints.ErrorDescription;
@@ -162,7 +163,7 @@ public class HintsAndErrorsProvider {
         public synchronized List<Fix> getFixes() {
             if (!computing && !computed) {
                 computing = true;
-                bindings.runOnBackground(() -> {
+                LSPWorkingPool.runOnBackground(() -> {
                     try {
                         List<Either<Command, CodeAction>> commands =
                                 bindings.getTextDocumentService().codeAction(new CodeActionParams(new TextDocumentIdentifier(fileUri),

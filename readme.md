@@ -12,6 +12,7 @@ apache Netbeans community.
 
 - upgrade eclipse [LSP4j libraries](https://github.com/eclipse/lsp4j) which supports the latest LSP spec (LSP 3.16.0) 
 - implement missing code because of LSP upgrade
+    - alternative _MarkOccurrences_ based on references if highlighting provider is not available
 - make it work with Omnisharp
     - set PID
     - send initialized msg

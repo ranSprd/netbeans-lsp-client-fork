@@ -27,6 +27,7 @@ import java.util.function.Consumer;
 import org.netbeans.api.editor.mimelookup.MimeRegistration;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
+import org.netbeans.modules.lsp.client.LSPBindingFactory;
 import org.netbeans.modules.lsp.client.LSPBindings;
 import org.netbeans.modules.parsing.spi.indexing.Context;
 import org.netbeans.modules.parsing.spi.indexing.CustomIndexer;
@@ -63,7 +64,7 @@ public class CustomIndexerImpl extends CustomIndexer {
             if (prj != null) {
                 WORKER.post(() -> {
                     for (String mimeType : mimeTypes) {
-                        LSPBindings.ensureServerRunning(prj, mimeType);
+                        LSPBindingFactory.ensureServerRunning(prj, mimeType);
                     }
                 });
             }

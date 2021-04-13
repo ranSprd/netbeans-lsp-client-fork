@@ -37,7 +37,8 @@ import org.netbeans.api.editor.fold.FoldType;
 import org.netbeans.api.editor.mimelookup.MimeRegistration;
 import org.netbeans.modules.editor.NbEditorUtilities;
 import org.netbeans.modules.lsp.client.LSPBindings;
-import org.netbeans.modules.lsp.client.LSPBindings.BackgroundTask;
+import org.netbeans.modules.lsp.client.LSPWorkingPool;
+import org.netbeans.modules.lsp.client.LSPWorkingPool.BackgroundTask;
 import org.netbeans.modules.lsp.client.Utils;
 import org.netbeans.spi.editor.fold.FoldHierarchyTransaction;
 import org.netbeans.spi.editor.fold.FoldInfo;
@@ -70,7 +71,7 @@ public class FoldManagerImpl implements FoldManager, BackgroundTask {
             return ;
         }
 
-        LSPBindings.addBackgroundTask(file, this);
+        LSPWorkingPool.addBackgroundTask(file, this);
     }
 
     @Override
@@ -100,7 +101,7 @@ public class FoldManagerImpl implements FoldManager, BackgroundTask {
     @Override
     public void release() {
         if (file != null) {
-            LSPBindings.removeBackgroundTask(file, this);
+            LSPWorkingPool.removeBackgroundTask(file, this);
             file = null;
         }
     }

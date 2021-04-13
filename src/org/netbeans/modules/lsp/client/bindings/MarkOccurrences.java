@@ -43,8 +43,10 @@ import org.netbeans.api.editor.mimelookup.MimeRegistration;
 import org.netbeans.api.editor.settings.AttributesUtilities;
 import org.netbeans.api.editor.settings.FontColorSettings;
 import org.netbeans.modules.editor.NbEditorUtilities;
+import org.netbeans.modules.lsp.client.LSPBindingFactory;
 import org.netbeans.modules.lsp.client.LSPBindings;
-import org.netbeans.modules.lsp.client.LSPBindings.BackgroundTask;
+import org.netbeans.modules.lsp.client.LSPWorkingPool;
+import org.netbeans.modules.lsp.client.LSPWorkingPool.BackgroundTask;
 import org.netbeans.modules.lsp.client.Utils;
 import org.netbeans.spi.editor.highlighting.HighlightsLayer;
 import org.netbeans.spi.editor.highlighting.HighlightsLayerFactory;
@@ -52,7 +54,6 @@ import org.netbeans.spi.editor.highlighting.ZOrder;
 import org.netbeans.spi.editor.highlighting.support.OffsetsBag;
 import org.openide.filesystems.FileObject;
 import org.openide.loaders.DataObject;
-import org.openide.util.Exceptions;
 import org.openide.util.RequestProcessor;
 
 /**
@@ -95,7 +96,7 @@ public class MarkOccurrences implements BackgroundTask, CaretListener, PropertyC
         if (file == null) {
             return result;
         }
-        LSPBindings server = LSPBindings.getBindings(file);
+        LSPBindings server = LSPBindingFactory.getBindingForFile(file);
         if (server == null) {
             return result;
         }
@@ -129,7 +130,6 @@ public class MarkOccurrences implements BackgroundTask, CaretListener, PropertyC
                 }
             }
         } catch (BadLocationException | InterruptedException | ExecutionException ex) {
-            Exceptions.printStackTrace(ex);
         }
     }
     
@@ -149,7 +149,6 @@ public class MarkOccurrences implements BackgroundTask, CaretListener, PropertyC
                 }
             }
         } catch (Exception ex) {
-            Exceptions.printStackTrace(ex);
         }
     }
 
@@ -173,7 +172,7 @@ public class MarkOccurrences implements BackgroundTask, CaretListener, PropertyC
             FileObject file = NbEditorUtilities.getFileObject(doc);
 
             if (file != null) {
-                LSPBindings.rescheduleBackgroundTask(file, this);
+                LSPWorkingPool.rescheduleBackgroundTask(file, this);
             }
         });
     }

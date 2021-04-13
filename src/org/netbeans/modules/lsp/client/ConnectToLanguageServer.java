@@ -64,7 +64,7 @@ public final class ConnectToLanguageServer implements ActionListener {
                 return ;
             }
 
-            LSPBindings.addBindings(root, port, params.getExtensions().split(","));
+            LSPBindingFactory.addBindings(root, port, params.getExtensions().split(","));
         }
     }
 }

@@ -50,7 +50,9 @@ import org.netbeans.api.editor.EditorRegistry;
 import org.netbeans.editor.BaseDocumentEvent;
 import org.netbeans.lib.editor.util.swing.DocumentUtilities;
 import org.netbeans.modules.editor.*;
+import org.netbeans.modules.lsp.client.LSPBindingFactory;
 import org.netbeans.modules.lsp.client.LSPBindings;
+import org.netbeans.modules.lsp.client.LSPWorkingPool;
 import org.netbeans.modules.lsp.client.Utils;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -161,7 +163,7 @@ public class TextDocumentSyncServerCapabilityHandler {
                         long documentVersion = DocumentUtilities.getDocumentVersion(doc);
 
                         WORKER.post(() -> {
-                            LSPBindings server = LSPBindings.getBindings(file);
+                            LSPBindings server = LSPBindingFactory.getBindingForFile(file);
 
                             if (server == null)
                                 return ; //ignore
@@ -216,7 +218,7 @@ public class TextDocumentSyncServerCapabilityHandler {
                                     });
                                 }
                             }
-                            LSPBindings.scheduleBackgroundTasks(file);
+                            LSPWorkingPool.scheduleBackgroundTasks(file);
                         });
                     } catch (BadLocationException ex) {
                         Exceptions.printStackTrace(ex);
@@ -255,7 +257,7 @@ public class TextDocumentSyncServerCapabilityHandler {
                 if (file == null)
                     return; //ignore
 
-                LSPBindings server = LSPBindings.getBindings(file);
+                LSPBindings server = LSPBindingFactory.getBindingForFile(file);
 
                 if (server == null)
                     return ; //ignore
@@ -278,7 +280,7 @@ public class TextDocumentSyncServerCapabilityHandler {
             if (file == null)
                 return; //ignore
 
-            LSPBindings server = LSPBindings.getBindings(file);
+            LSPBindings server = LSPBindingFactory.getBindingForFile(file);
 
             if (server == null)
                 return ; //ignore
@@ -309,7 +311,7 @@ public class TextDocumentSyncServerCapabilityHandler {
                                                                      text[0]);
 
             server.getTextDocumentService().didOpen(new DidOpenTextDocumentParams(textDocumentItem));
-            LSPBindings.scheduleBackgroundTasks(file);
+            LSPWorkingPool.scheduleBackgroundTasks(file);
         });
     }
 
@@ -321,7 +323,7 @@ public class TextDocumentSyncServerCapabilityHandler {
             if (file == null)
                 return; //ignore
 
-            LSPBindings server = LSPBindings.getBindings(file);
+            LSPBindings server = LSPBindingFactory.getBindingForFile(file);
 
             if (server == null)
                 return ; //ignore
@@ -329,12 +331,12 @@ public class TextDocumentSyncServerCapabilityHandler {
             SwingUtilities.invokeLater(() -> {
                 if (c.getClientProperty(MarkOccurrences.class) == null) {
                     MarkOccurrences mo = new MarkOccurrences(c);
-                    LSPBindings.addBackgroundTask(file, mo);
+                    LSPWorkingPool.addBackgroundTask(file, mo);
                     c.putClientProperty(MarkOccurrences.class, mo);
                 }
                 if (c.getClientProperty(BreadcrumbsImpl.class) == null) {
                     BreadcrumbsImpl bi = new BreadcrumbsImpl(c);
-                    LSPBindings.addBackgroundTask(file, bi);
+                    LSPWorkingPool.addBackgroundTask(file, bi);
                     c.putClientProperty(BreadcrumbsImpl.class, bi);
                 }
             });

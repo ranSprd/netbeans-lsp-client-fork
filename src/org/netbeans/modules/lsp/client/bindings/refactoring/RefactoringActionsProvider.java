@@ -34,6 +34,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.netbeans.api.lexer.TokenHierarchy;
 import org.netbeans.api.lexer.TokenSequence;
 import org.netbeans.modules.editor.NbEditorUtilities;
+import org.netbeans.modules.lsp.client.LSPBindingFactory;
 import org.netbeans.modules.lsp.client.LSPBindings;
 import org.netbeans.modules.lsp.client.Utils;
 import org.netbeans.modules.refactoring.spi.ui.ActionsImplementationProvider;
@@ -69,7 +70,7 @@ public class RefactoringActionsProvider extends ActionsImplementationProvider{
                     Document doc = c.getDocument();
                     AbstractDocument abstractDoc = (doc instanceof AbstractDocument) ? ((AbstractDocument) doc) : null;
                     FileObject file = NbEditorUtilities.getFileObject(doc);
-                    LSPBindings bindings = LSPBindings.getBindings(file);
+                    LSPBindings bindings = LSPBindingFactory.getBindingForFile(file);
                     int caretPos = c.getCaretPosition();
                     Position pos = Utils.createPosition(doc, caretPos);
                     ReferenceParams params = new ReferenceParams();
@@ -117,7 +118,7 @@ public class RefactoringActionsProvider extends ActionsImplementationProvider{
                     Document doc = c.getDocument();
                     AbstractDocument abstractDoc = (doc instanceof AbstractDocument) ? ((AbstractDocument) doc) : null;
                     FileObject file = NbEditorUtilities.getFileObject(doc);
-                    LSPBindings bindings = LSPBindings.getBindings(file);
+                    LSPBindings bindings = LSPBindingFactory.getBindingForFile(file);
                     int caretPos = c.getCaretPosition();
                     Position pos = Utils.createPosition(doc, caretPos);
                     String name;
@@ -179,7 +180,7 @@ public class RefactoringActionsProvider extends ActionsImplementationProvider{
             JEditorPane c = ec.getOpenedPanes()[0];
             Document doc = c.getDocument();
             FileObject file = NbEditorUtilities.getFileObject(doc);
-            LSPBindings bindings = file != null ? LSPBindings.getBindings(file) : null;
+            LSPBindings bindings = file != null ? LSPBindingFactory.getBindingForFile(file) : null;
             return bindings;
         }
         return null;

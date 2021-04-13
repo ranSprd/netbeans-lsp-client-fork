@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.netbeans.modules.lsp.client.bindings;
+package org.netbeans.modules.lsp.client.bindings.symbols;
 
 import java.util.EnumSet;
 import java.util.Set;

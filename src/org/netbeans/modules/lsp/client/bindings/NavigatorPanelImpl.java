@@ -39,8 +39,10 @@ import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
+import org.netbeans.modules.lsp.client.LSPBindingFactory;
 import org.netbeans.modules.lsp.client.LSPBindings;
-import org.netbeans.modules.lsp.client.LSPBindings.BackgroundTask;
+import org.netbeans.modules.lsp.client.LSPWorkingPool;
+import org.netbeans.modules.lsp.client.LSPWorkingPool.BackgroundTask;
 import org.netbeans.modules.lsp.client.Utils;
 import org.netbeans.spi.navigator.NavigatorPanel;
 import org.openide.explorer.ExplorerManager;
@@ -110,14 +112,14 @@ public class NavigatorPanelImpl extends Children.Keys<Either<SymbolInformation, 
 
     private void updateFile() {
         if (file != null) {
-            LSPBindings.removeBackgroundTask(file, this);
+            LSPWorkingPool.removeBackgroundTask(file, this);
             setKeys(Collections.emptyList());
             file = null;
         }
-        Collection<? extends FileObject> files = result != null ? result.allInstances() : Collections.emptyList();
+        Collection<? extends FileObject> files = (result != null) ? result.allInstances() : Collections.emptyList();
         file = files.isEmpty() ? null : files.iterator().next();
         if (file != null) {
-            LSPBindings.addBackgroundTask(file, this);
+            LSPWorkingPool.addBackgroundTask(file, this);
         }
     }
 
@@ -130,23 +132,23 @@ public class NavigatorPanelImpl extends Children.Keys<Either<SymbolInformation, 
     public void run(LSPBindings bindings, FileObject file) {
         if (file.equals(this.file)) {
             try { 
-                //csharp:file:file:///home/raik/develop/csharp/test1/restfulApi/Program.cs
                 String uri = Utils.toURI(file);
                 TextDocumentService docService = bindings.getTextDocumentService();
-                
                 
                 CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> s = 
                         docService.documentSymbol(new DocumentSymbolParams(new TextDocumentIdentifier(uri)));
                 List<Either<SymbolInformation, DocumentSymbol>> symbols = s.get();
 
-                setKeys(symbols);
-                view.expandAll();
+                if (symbols != null) {
+                    setKeys(symbols);
+                    view.expandAll();
+                }
             } catch (ExecutionException ex) {
 //                LOG.log(Level.WARNING, "Can't load data from TextDocumentService", ex);
                 setKeys(Collections.emptyList());
             } catch (InterruptedException ex) {
                 //try again:
-                LSPBindings.addBackgroundTask(file, this);
+                LSPWorkingPool.addBackgroundTask(file, this);
             }
         } else {
             //ignore, should be called with the other file eventually.
@@ -211,13 +213,15 @@ public class NavigatorPanelImpl extends Children.Keys<Either<SymbolInformation, 
         public NodeImpl(String currentFileUri, Either<SymbolInformation, DocumentSymbol> symbol) {
             super(createChildren(currentFileUri, symbol));
             if (symbol.isLeft()) {
-                setDisplayName(symbol.getLeft().getName());
-                setIconBaseWithExtension(Icons.getSymbolIconBase(symbol.getLeft().getKind()));
-                this.open = createOpenAction(symbol.getLeft().getLocation().getUri(), symbol.getLeft().getLocation().getRange());
+                SymbolInformation symbolInfo = symbol.getLeft();
+                setDisplayName(symbolInfo.getName());
+                setIconBaseWithExtension(Icons.getSymbolIconBase(symbolInfo.getKind()));
+                this.open = createOpenAction(symbolInfo.getLocation().getUri(), symbolInfo.getLocation().getRange());
             } else {
-                setDisplayName(symbol.getRight().getName());
-                setIconBaseWithExtension(Icons.getSymbolIconBase(symbol.getRight().getKind()));
-                this.open = createOpenAction(currentFileUri, symbol.getRight().getRange());
+                DocumentSymbol docSymbol = symbol.getRight();
+                setDisplayName(docSymbol.getDetail());
+                setIconBaseWithExtension(Icons.getSymbolIconBase(docSymbol.getKind()));
+                this.open = createOpenAction(currentFileUri, docSymbol.getRange());
             }
         }
 
@@ -265,7 +269,7 @@ public class NavigatorPanelImpl extends Children.Keys<Either<SymbolInformation, 
             try {
                 FileObject file = URLMapper.findFileObject(uri.toURL());
                 if (file != null) {
-                    return LSPBindings.getBindings(file) != null ? Collections.singletonList(INSTANCE) : Collections.emptyList();
+                    return LSPBindingFactory.getBindingForFile(file) != null ? Collections.singletonList(INSTANCE) : Collections.emptyList();
                 } else {
                     return Collections.emptyList();
                 }

@@ -55,6 +55,7 @@ import org.netbeans.api.editor.mimelookup.MimeRegistration;
 import org.netbeans.editor.BaseDocument;
 import org.netbeans.editor.Utilities;
 import org.netbeans.modules.editor.NbEditorUtilities;
+import org.netbeans.modules.lsp.client.LSPBindingFactory;
 import org.netbeans.modules.lsp.client.LSPBindings;
 import org.netbeans.modules.lsp.client.Utils;
 import org.netbeans.modules.lsp.client.model.LSPInitializeResult;
@@ -91,7 +92,7 @@ public class CompletionProviderImpl implements CompletionProvider {
                             //TODO: beep
                             return ;
                         }
-                        LSPBindings server = LSPBindings.getBindings(file);
+                        LSPBindings server = LSPBindingFactory.getBindingForFile(file);
                         if (server == null) {
                             return ;
                         }
@@ -148,7 +149,7 @@ public class CompletionProviderImpl implements CompletionProvider {
                         //TODO: beep
                         return ;
                     }
-                    LSPBindings server = LSPBindings.getBindings(file);
+                    LSPBindings server = LSPBindingFactory.getBindingForFile(file);
                     if (server == null) {
                         return ;
                     }
@@ -380,7 +381,7 @@ public class CompletionProviderImpl implements CompletionProvider {
         if (file == null) {
             return 0;
         }
-        LSPBindings server = LSPBindings.getBindings(file);
+        LSPBindings server = LSPBindingFactory.getBindingForFile(file);
         if (server == null) {
             return 0;
         }

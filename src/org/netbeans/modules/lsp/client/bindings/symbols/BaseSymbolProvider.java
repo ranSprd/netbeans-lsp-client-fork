@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.netbeans.modules.lsp.client.bindings;
+package org.netbeans.modules.lsp.client.bindings.symbols;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -39,8 +39,10 @@ import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectInformation;
 import org.netbeans.api.project.ProjectUtils;
+import org.netbeans.modules.lsp.client.LSPBindingFactory;
 import org.netbeans.modules.lsp.client.LSPBindings;
 import org.netbeans.modules.lsp.client.Utils;
+import org.netbeans.modules.lsp.client.bindings.Icons;
 import org.netbeans.spi.jumpto.support.NameMatcher;
 import org.netbeans.spi.jumpto.support.NameMatcherFactory;
 import org.netbeans.spi.jumpto.type.SearchType;
@@ -69,11 +71,11 @@ public class BaseSymbolProvider {
         List<CompletableFuture<List<? extends SymbolInformation>>> queries = new ArrayList<>();
 
         try {
-            for (LSPBindings b : LSPBindings.getAllBindings()) {
+            for (LSPBindings binding : LSPBindingFactory.getAllBindings()) {
                 if (cancel.get()) {
                     return ;
                 }
-                queries.add(b.getWorkspaceService().symbol(new WorkspaceSymbolParams(searchText)));
+                queries.add(binding.getWorkspaceService().symbol(new WorkspaceSymbolParams(searchText)));
             }
 
             NameMatcher matcher = NameMatcherFactory.createNameMatcher(searchText, searchType);

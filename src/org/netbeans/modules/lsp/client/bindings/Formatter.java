@@ -36,6 +36,7 @@ import org.netbeans.modules.editor.indent.api.IndentUtils;
 import org.netbeans.modules.editor.indent.spi.Context;
 import org.netbeans.modules.editor.indent.spi.ExtraLock;
 import org.netbeans.modules.editor.indent.spi.ReformatTask;
+import org.netbeans.modules.lsp.client.LSPBindingFactory;
 import org.netbeans.modules.lsp.client.LSPBindings;
 import org.netbeans.modules.lsp.client.Utils;
 import org.netbeans.modules.lsp.client.model.LSPServerCapabilities;
@@ -52,7 +53,7 @@ public class Formatter implements ReformatTask {
         public ReformatTask createTask(Context context) {
             FileObject file = NbEditorUtilities.getFileObject(context.document());
             if (file != null) {
-                LSPBindings bindings = LSPBindings.getBindings(file);
+                LSPBindings bindings = LSPBindingFactory.getBindingForFile(file);
                 if (bindings != null) {
                     return new Formatter(context);
                 }
@@ -72,7 +73,7 @@ public class Formatter implements ReformatTask {
     public void reformat() throws BadLocationException {
         FileObject file = NbEditorUtilities.getFileObject(ctx.document());
         if (file != null) {
-            LSPBindings bindings = LSPBindings.getBindings(file);
+            LSPBindings bindings = LSPBindingFactory.getBindingForFile(file);
             if (bindings != null) {
                 LSPServerCapabilities capabilities = bindings.getInitResult().getCapabilities();
                 if (capabilities.hasDocumentRangeFormattingSupport()) {
