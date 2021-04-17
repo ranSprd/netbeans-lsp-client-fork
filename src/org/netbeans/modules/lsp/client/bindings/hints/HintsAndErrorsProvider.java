@@ -76,7 +76,6 @@ public class HintsAndErrorsProvider {
     }
     
     public List<ErrorDescription> consume(PublishDiagnosticsParams diagnostics, FileObject file, Document doc) {
-//        System.out.println("pdp version " +diagnostics.getVersion() +"\t "+diagnostics.getDiagnostics().size() +" \t" +diagnostics.getUri());
         List<ErrorDescription> errorDescriptions = get(diagnostics).combinedStream(diagnostics.getDiagnostics())
 //        List<ErrorDescription> errorDescriptions = diagnostics.getDiagnostics().stream()
                 .map(d -> createHintsAndErrors(doc, file, diagnostics.getUri(), d))
@@ -89,13 +88,16 @@ public class HintsAndErrorsProvider {
         return ErrorDescriptionFactory.createErrorDescription(severityMap.get(d.getSeverity()), d.getMessage(), fixList, file, Utils.getOffset(doc, d.getRange().getStart()), Utils.getOffset(doc, d.getRange().getEnd()));
     }
     
-    
+    /** 
+     *  Server can send several lists (with different content) for the same file version, for that reason
+     *  previous send lists are cached and combined with later arrived lists. 
+     */
     private ListMerger get(PublishDiagnosticsParams diagnostics) {
         int diagnosticVersion = (diagnostics.getVersion() == null)?-1:diagnostics.getVersion();
 
         ListMerger listMerger = cachedLists.get(diagnostics.getUri());
         if (listMerger == null || diagnosticVersion == 0) {
-            // sometimes version 0 contains broken infos
+            // sometimes version 0 contains broken infos, for that reason we use only the last version 0
             listMerger = new ListMerger(diagnosticVersion);
             cachedLists.put(diagnostics.getUri(), listMerger);
         } else if (listMerger.version < diagnosticVersion) {

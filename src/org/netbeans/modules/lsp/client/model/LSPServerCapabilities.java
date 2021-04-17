@@ -19,12 +19,14 @@
 package org.netbeans.modules.lsp.client.model;
 
 import org.eclipse.lsp4j.CodeActionOptions;
+import org.eclipse.lsp4j.CodeLensOptions;
 import org.eclipse.lsp4j.CompletionOptions;
 import org.eclipse.lsp4j.DocumentFormattingOptions;
 import org.eclipse.lsp4j.DocumentHighlightOptions;
 import org.eclipse.lsp4j.DocumentRangeFormattingOptions;
 import org.eclipse.lsp4j.DocumentSymbolOptions;
 import org.eclipse.lsp4j.FoldingRangeProviderOptions;
+import org.eclipse.lsp4j.HoverOptions;
 import org.eclipse.lsp4j.ReferenceOptions;
 import org.eclipse.lsp4j.RenameOptions;
 import org.eclipse.lsp4j.ServerCapabilities;
@@ -136,5 +138,12 @@ public class LSPServerCapabilities {
         Either<Boolean, FoldingRangeProviderOptions> folding = serverCapabilities.getFoldingRangeProvider();
         return translateEither(folding);
     }
+
+    public Either<Boolean, HoverOptions> getHoverProvider() {
+        Either<Boolean, HoverOptions> hover = serverCapabilities.getHoverProvider();
+        return hover;
+    }
+
+    
 
 }

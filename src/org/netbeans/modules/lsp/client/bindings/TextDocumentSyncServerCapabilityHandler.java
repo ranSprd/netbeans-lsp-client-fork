@@ -50,6 +50,7 @@ import org.netbeans.api.editor.EditorRegistry;
 import org.netbeans.editor.BaseDocumentEvent;
 import org.netbeans.lib.editor.util.swing.DocumentUtilities;
 import org.netbeans.modules.editor.*;
+import org.netbeans.modules.lsp.client.CodeLensImpl;
 import org.netbeans.modules.lsp.client.LSPBindingFactory;
 import org.netbeans.modules.lsp.client.LSPBindings;
 import org.netbeans.modules.lsp.client.LSPWorkingPool;
@@ -197,8 +198,7 @@ public class TextDocumentSyncServerCapabilityHandler {
                                     break;
                             }
 
-                            VersionedTextDocumentIdentifier di = new VersionedTextDocumentIdentifier(++version);
-                            di.setUri(org.netbeans.modules.lsp.client.Utils.toURI(file));
+                            VersionedTextDocumentIdentifier di = new VersionedTextDocumentIdentifier(org.netbeans.modules.lsp.client.Utils.toURI(file), ++version);
                             DidChangeTextDocumentParams params = new DidChangeTextDocumentParams(di, Arrays.asList(event));
 
                             server.getTextDocumentService().didChange(params);
@@ -339,6 +339,8 @@ public class TextDocumentSyncServerCapabilityHandler {
                     LSPWorkingPool.addBackgroundTask(file, bi);
                     c.putClientProperty(BreadcrumbsImpl.class, bi);
                 }
+                CodeLensImpl cl = new CodeLensImpl();
+                LSPWorkingPool.addBackgroundTask(file, cl);
             });
         });
     }

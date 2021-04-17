@@ -18,8 +18,11 @@
  */
 package org.netbeans.modules.lsp.client.bindings;
 
+import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -32,6 +35,7 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
+import javax.swing.text.StyleConstants;
 import org.eclipse.lsp4j.DocumentHighlight;
 import org.eclipse.lsp4j.DocumentHighlightParams;
 import org.eclipse.lsp4j.Location;
@@ -62,10 +66,14 @@ import org.openide.util.RequestProcessor;
  */
 public class MarkOccurrences implements BackgroundTask, CaretListener, PropertyChangeListener {
 
+    public static final String KEY_VIRTUAL_TEXT_PREPEND = "virtual-text-prepend"; //NOI18N
+    
     private static final RequestProcessor WORKER = new RequestProcessor(MarkOccurrences.class.getName(), 1, false, false);
     private final JTextComponent component;
     private Document doc;
     private int caretPos;
+    
+    private List<? extends Location> last;
 
     public MarkOccurrences(JTextComponent component) {
         this.component = component;
@@ -87,6 +95,23 @@ public class MarkOccurrences implements BackgroundTask, CaretListener, PropertyC
             latestCaretPos = this.caretPos;
         }
         getHighlightsBag(document).setHighlights(computeHighlights(document, latestCaretPos));
+
+        // this is experimental and should test the 'prepend' text feature 
+        if (last != null) {
+            OffsetsBag preTextBag = new OffsetsBag(document, false);
+            
+            for(Location location : last) {
+                    int s = Utils.getOffset(document, location.getRange().getStart());
+                    preTextBag.addHighlight(s, s+1, 
+                            AttributesUtilities.createImmutable(
+                                    KEY_VIRTUAL_TEXT_PREPEND, "foo:",
+                                    StyleConstants.Foreground, Color.red,
+                                    StyleConstants.FontFamily, "arial"
+                                    ));
+            }
+            getPreTextBag(document).setHighlights(preTextBag);
+        }
+        
     }
 
     private OffsetsBag computeHighlights(Document doc, int caretPos) {
@@ -141,6 +166,7 @@ public class MarkOccurrences implements BackgroundTask, CaretListener, PropertyC
             List<? extends Location> references = server.getTextDocumentService()
                                                             .references( params)
                                                             .get();
+            last = references;
             for(Location location : references) {
                 if (fileUri.equals(location.getUri())) {
                     result.addHighlight(Utils.getOffset(doc, location.getRange().getStart()), 
@@ -185,10 +211,11 @@ public class MarkOccurrences implements BackgroundTask, CaretListener, PropertyC
     }
 
     static OffsetsBag getHighlightsBag(Document doc) {
-        OffsetsBag bag = (OffsetsBag) doc.getProperty(MarkOccurrences.class);
+        OffsetsBag bag = (OffsetsBag) doc.getProperty(MarkOccurrences.class.getName());
 
         if (bag == null) {
-            doc.putProperty(MarkOccurrences.class, bag = new OffsetsBag(doc, false));
+//            doc.putProperty(MarkOccurrences.class, bag = new OffsetsBag(doc, false));
+            doc.putProperty(MarkOccurrences.class.getName(), bag = new OffsetsBag(doc, true));
 
             Object stream = doc.getProperty(Document.StreamDescriptionProperty);
             final OffsetsBag bagFin = bag;
@@ -213,15 +240,40 @@ public class MarkOccurrences implements BackgroundTask, CaretListener, PropertyC
         return bag;
     }
     
+    
+//    private static final Object KEY_PRE_TEXT = new Object();
+    private static final String KEY_PRE_TEXT = MarkOccurrences.class.getName() + "-prepend";
+    static OffsetsBag getPreTextBag(Document doc) {
+        OffsetsBag bag = (OffsetsBag) doc.getProperty(KEY_PRE_TEXT);
+        
+        if (bag == null) {
+            doc.putProperty(KEY_PRE_TEXT, bag = new OffsetsBag(doc, false));
+            
+//            Object stream = doc.getProperty(Document.StreamDescriptionProperty);
+            
+//            if (stream instanceof DataObject) {
+//                TimesCollector.getDefault().reportReference(((DataObject) stream).getPrimaryFile(), "ImportsHighlightsBag", "[M] Imports Highlights Bag", bag);
+//            }
+        }
+        
+        return bag;
+    }
+    
+    
     @MimeRegistration(mimeType="", service=HighlightsLayerFactory.class)
     public static class HighlightsLayerFactoryImpl implements HighlightsLayerFactory {
 
         public HighlightsLayer[] createLayers(HighlightsLayerFactory.Context context) {
             return new HighlightsLayer[] {
                 //the mark occurrences layer should be "above" current row and "below" the search layers:
-                HighlightsLayer.create(MarkOccurrences.class.getName(), ZOrder.SHOW_OFF_RACK.forPosition(20), true, MarkOccurrences.getHighlightsBag(context.getDocument())),
+                HighlightsLayer.create(MarkOccurrences.class.getName()+"-2", ZOrder.SHOW_OFF_RACK.forPosition(20), true, MarkOccurrences.getHighlightsBag(context.getDocument())),
+//                HighlightsLayer.create(MarkOccurrences.class.getName()+"-3", ZOrder.SHOW_OFF_RACK.forPosition(30), true, MarkOccurrences.getPreTextBag(context.getDocument())),
+//            HighlightsLayer.create(MarkOccurrences.class.getName() + "-2", ZOrder.SYNTAX_RACK.forPosition(1500), false, MarkOccurrences.getHighlightsBag(context.getDocument())),
+            HighlightsLayer.create(MarkOccurrences.class.getName() + "-3", ZOrder.SYNTAX_RACK.forPosition(1600), false, MarkOccurrences.getPreTextBag(context.getDocument())),
+                
             };
         }
 
     }
+    
 }

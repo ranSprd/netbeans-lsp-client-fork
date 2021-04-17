@@ -391,8 +391,6 @@ public class LSPBindingFactory {
     }
     
     
-    
-    
     @OnStop
     public static class Cleanup implements Runnable {
 
