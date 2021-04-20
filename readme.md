@@ -11,8 +11,12 @@ apache Netbeans community.
 ## current changes are
 
 - upgrade eclipse [LSP4j libraries](https://github.com/eclipse/lsp4j) which supports the latest LSP spec (LSP 3.16.0) 
+- fix "document not locked" exception in HyperlinkProvider
 - implement missing code because of LSP upgrade
     - alternative _MarkOccurrences_ based on references if highlighting provider is not available
+    - implement Hover client endpoint (prototyp)
+    - implement CodeLens client endpoint (prototyp)
+    - implement Signature client endpoint (prototyp)
 - make it work with Omnisharp
     - set PID
     - send initialized msg
