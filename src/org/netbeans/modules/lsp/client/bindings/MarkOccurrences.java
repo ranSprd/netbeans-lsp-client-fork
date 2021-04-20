@@ -31,6 +31,7 @@ import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.plaf.TextUI;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
@@ -46,6 +47,7 @@ import org.netbeans.api.editor.mimelookup.MimeLookup;
 import org.netbeans.api.editor.mimelookup.MimeRegistration;
 import org.netbeans.api.editor.settings.AttributesUtilities;
 import org.netbeans.api.editor.settings.FontColorSettings;
+import org.netbeans.editor.BaseTextUI;
 import org.netbeans.modules.editor.NbEditorUtilities;
 import org.netbeans.modules.lsp.client.LSPBindingFactory;
 import org.netbeans.modules.lsp.client.LSPBindings;
@@ -70,6 +72,7 @@ public class MarkOccurrences implements BackgroundTask, CaretListener, PropertyC
     
     private static final RequestProcessor WORKER = new RequestProcessor(MarkOccurrences.class.getName(), 1, false, false);
     private final JTextComponent component;
+    private final BaseTextUI baseUI;
     private Document doc;
     private int caretPos;
     
@@ -77,11 +80,19 @@ public class MarkOccurrences implements BackgroundTask, CaretListener, PropertyC
 
     public MarkOccurrences(JTextComponent component) {
         this.component = component;
+        TextUI ui = component.getUI();
+        if (ui instanceof BaseTextUI) {
+            baseUI = (BaseTextUI)ui;
+        } else {
+            baseUI = null;
+        }
+        
         try {
-            component.addCaretListener(this);
-            component.addPropertyChangeListener(this);
             doc = component.getDocument();
             caretPos = component.getCaretPosition();
+            component.addCaretListener(this);
+            component.addPropertyChangeListener(this);
+            
         } catch (Exception e) {
         }
     }
@@ -104,13 +115,16 @@ public class MarkOccurrences implements BackgroundTask, CaretListener, PropertyC
                     int s = Utils.getOffset(document, location.getRange().getStart());
                     preTextBag.addHighlight(s, s+1, 
                             AttributesUtilities.createImmutable(
-                                    KEY_VIRTUAL_TEXT_PREPEND, "foo:",
-                                    StyleConstants.Foreground, Color.red,
-                                    StyleConstants.FontFamily, "arial"
+                                    KEY_VIRTUAL_TEXT_PREPEND, "foo:"
+//                                    StyleConstants.Foreground, Color.red,
+//                                    StyleConstants.FontFamily, "arial"
                                     ));
             }
             getPreTextBag(document).setHighlights(preTextBag);
         }
+        
+        
+        
         
     }
 

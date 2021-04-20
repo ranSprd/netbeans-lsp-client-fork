@@ -75,7 +75,15 @@ public class HintsAndErrorsProvider {
         this.bindings = bindings;
     }
     
-    public List<ErrorDescription> consume(PublishDiagnosticsParams diagnostics, FileObject file, Document doc) {
+    /**
+     * Build a list of ErrorDescription from given LSP struct.
+     * 
+     * @param diagnostics data from LSP 
+     * @param file
+     * @param doc
+     * @return 
+     */
+    public List<ErrorDescription> transform(PublishDiagnosticsParams diagnostics, FileObject file, Document doc) {
         List<ErrorDescription> errorDescriptions = get(diagnostics).combinedStream(diagnostics.getDiagnostics())
 //        List<ErrorDescription> errorDescriptions = diagnostics.getDiagnostics().stream()
                 .map(d -> createHintsAndErrors(doc, file, diagnostics.getUri(), d))

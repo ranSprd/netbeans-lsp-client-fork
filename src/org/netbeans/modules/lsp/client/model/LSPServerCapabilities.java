@@ -18,8 +18,8 @@
  */
 package org.netbeans.modules.lsp.client.model;
 
+import java.util.Optional;
 import org.eclipse.lsp4j.CodeActionOptions;
-import org.eclipse.lsp4j.CodeLensOptions;
 import org.eclipse.lsp4j.CompletionOptions;
 import org.eclipse.lsp4j.DocumentFormattingOptions;
 import org.eclipse.lsp4j.DocumentHighlightOptions;
@@ -29,7 +29,9 @@ import org.eclipse.lsp4j.FoldingRangeProviderOptions;
 import org.eclipse.lsp4j.HoverOptions;
 import org.eclipse.lsp4j.ReferenceOptions;
 import org.eclipse.lsp4j.RenameOptions;
+import org.eclipse.lsp4j.SemanticTokensWithRegistrationOptions;
 import org.eclipse.lsp4j.ServerCapabilities;
+import org.eclipse.lsp4j.SignatureHelpOptions;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.eclipse.lsp4j.TextDocumentSyncOptions;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -53,7 +55,7 @@ public class LSPServerCapabilities {
      * @param either
      * @return
      */
-    private boolean translateEither(Either<Boolean, ?> either) {
+    private boolean translateAvailibility(Either<Boolean, ?> either) {
         return either != null && ((either.isLeft() && Utils.isTrue(either.getLeft())) || either.isRight());
     }
 
@@ -80,7 +82,7 @@ public class LSPServerCapabilities {
      */
     public boolean hasRenameSupport() {
         Either<Boolean, RenameOptions> hasRename = serverCapabilities.getRenameProvider();
-        return translateEither(hasRename);
+        return translateAvailibility(hasRename);
     }
 
     public CompletionOptions getCompletionProvider() {
@@ -95,17 +97,17 @@ public class LSPServerCapabilities {
      */
     public boolean hasDocumentSymbolSupport() {
         Either<Boolean, DocumentSymbolOptions> documentSymbol = serverCapabilities.getDocumentSymbolProvider();
-        return translateEither(documentSymbol);
+        return translateAvailibility(documentSymbol);
     }
 
     public boolean hasDocumentFormattingSupport() {
         Either<Boolean, DocumentFormattingOptions> docFormatting = serverCapabilities.getDocumentFormattingProvider();
-        return translateEither(docFormatting);
+        return translateAvailibility(docFormatting);
     }
 
     public boolean hasDocumentRangeFormattingSupport() {
         Either<Boolean, DocumentRangeFormattingOptions> docRangeFormatting = serverCapabilities.getDocumentRangeFormattingProvider();
-        return translateEither(docRangeFormatting);
+        return translateAvailibility(docRangeFormatting);
     }
 
     /**
@@ -113,7 +115,7 @@ public class LSPServerCapabilities {
      */
     public boolean hasDocumentHighlightSupport() {
         Either<Boolean, DocumentHighlightOptions> docHighlighting = serverCapabilities.getDocumentHighlightProvider();
-        return translateEither(docHighlighting);
+        return translateAvailibility(docHighlighting);
     }
 
     public Either<TextDocumentSyncKind, TextDocumentSyncOptions> getTextDocumentSync() {
@@ -126,7 +128,7 @@ public class LSPServerCapabilities {
 
     public boolean hasCodeActionSupport() {
         Either<Boolean, CodeActionOptions> codeAction = serverCapabilities.getCodeActionProvider();
-        return translateEither(codeAction);
+        return translateAvailibility(codeAction);
     }
 
     /**
@@ -136,14 +138,32 @@ public class LSPServerCapabilities {
      */
     public boolean hasFoldingRangeSupport() {
         Either<Boolean, FoldingRangeProviderOptions> folding = serverCapabilities.getFoldingRangeProvider();
-        return translateEither(folding);
+        return translateAvailibility(folding);
     }
 
-    public Either<Boolean, HoverOptions> getHoverProvider() {
+    public Optional<HoverOptions> getHoverProviderOptions() {
         Either<Boolean, HoverOptions> hover = serverCapabilities.getHoverProvider();
-        return hover;
+        if (hover!=null && hover.isRight()) {
+            return Optional.ofNullable(hover.getRight());
+        }
+        return Optional.empty();
+    }
+    
+    public boolean hasHoverSupport() {
+        Either<Boolean, HoverOptions> hoverSupport = serverCapabilities.getHoverProvider();
+        return translateAvailibility(hoverSupport);
     }
 
+    public SignatureHelpOptions getSignatureHelpProviderOptions() {
+        SignatureHelpOptions options = serverCapabilities.getSignatureHelpProvider();
+        return options;
+    }
+
+    public SemanticTokensWithRegistrationOptions getSemanticTokensProvider() {
+        return serverCapabilities.getSemanticTokensProvider();
+    }
+
+    
     
 
 }

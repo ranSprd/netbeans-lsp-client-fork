@@ -35,10 +35,11 @@ import org.openide.util.RequestProcessor;
 public class LSPWorkingPool {
  
     private static final RequestProcessor WORKER = new RequestProcessor(LanguageClientImpl.class.getName(), 1, false, true);
+    public static final RequestProcessor  ASYNC = new RequestProcessor(LanguageClientImpl.class.getName()+"-ASYNC", 1, false, false);
+    
     private static final int DELAY = 500;
 
     private static final Map<FileObject, Map<BackgroundTask, RequestProcessor.Task>> backgroundTasks = new WeakHashMap<>();
-    
 
     @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
     public static synchronized void addBackgroundTask(FileObject file, BackgroundTask task) {

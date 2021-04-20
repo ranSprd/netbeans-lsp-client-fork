@@ -164,6 +164,7 @@ public class CompletionProviderImpl implements CompletionProvider {
                         return ; //no results
                     }
                     List<CompletionItem> items;
+                    System.out.println("COMPLETION :\n" +completionResult);
                     boolean incomplete;
                     if (completionResult.isLeft()) {
                         items = completionResult.getLeft();

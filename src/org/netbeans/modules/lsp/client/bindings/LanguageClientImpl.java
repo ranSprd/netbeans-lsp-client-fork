@@ -94,7 +94,7 @@ public class LanguageClientImpl implements LanguageClient {
                 }
 
                 WORKER.post(() -> {                
-                    List<ErrorDescription> errorDescriptions = hintsAndErrorsProvider.consume(pdp, file, doc);
+                    List<ErrorDescription> errorDescriptions = hintsAndErrorsProvider.transform(pdp, file, doc);
                     HintsController.setErrors(doc, LanguageClientImpl.class.getName(), errorDescriptions);
                 });
                 
