@@ -91,7 +91,7 @@ public class BreadcrumbsImpl implements BackgroundTask {
 
             SwingUtilities.invokeLater(() -> update());
         } catch (InterruptedException | ExecutionException ex) {
-            Exceptions.printStackTrace(ex);
+//            Exceptions.printStackTrace(ex);
         }
     }
 
